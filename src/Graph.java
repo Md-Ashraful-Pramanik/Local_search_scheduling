@@ -5,20 +5,43 @@ import java.util.Vector;
 public class Graph {
     private int vertexCount;
     private Vector<Vertex> vertices;
+    private Vector<Student> students;
     private int takenColorCount;
+    private int studentCount;
 
-    public Graph(int vertexCount) {
+    public Graph(int vertexCount, int studentCount) {
         this.vertexCount = vertexCount;
         vertices = new Vector<>(vertexCount);
         for (int i=0; i<vertexCount; i++)
             vertices.add(new Vertex(vertexCount, i));
 
+        this.studentCount = studentCount;
+        students = new Vector<>(studentCount);
+
         takenColorCount = 0;
+    }
+
+    public void addStudent(int[] courses){
+        Vector<Vertex> v = new Vector<>(courses.length);
+
+        for (int course : courses)
+            v.add(vertices.get(course));
+
+        students.add(new Student(students.size(), v));
     }
 
     public void addEdge(int u, int v){
         vertices.get(u).addEdge(vertices.get(v));
         vertices.get(v).addEdge(vertices.get(u));
+    }
+
+    public double getPenalty(){
+        int penalty = 0;
+
+        for (int i=0; i<studentCount; i++)
+            penalty += students.get(i).getPenalty();
+
+        return (double) penalty/studentCount;
     }
 
     public void applyDSatur(){
@@ -71,52 +94,83 @@ public class Graph {
         }
     }
 
+    public void print(){
+        System.out.println();
+        System.out.println("Timeslots: " + takenColorCount);
+        System.out.printf("Penalty: %.2f\n" ,getPenalty());
+        System.out.println();
+        //for (int i=0; i<vertexCount; i++)
+        //    System.out.println(vertices.get(i).getScheduling());
+
+        System.out.println();
+    }
+
     public static void main(String[] args) throws Exception{
-        String path = "Toronto/yor-f-83.stu"; // 26 (21)
-        int courseCount = 181;
+        Scanner scanner;
+        DATASET dataset = null;
+        Graph graph;
 
-        //String path = "Toronto/car-s-91.stu";// 42 (35)
-        //int courseCount = 682;
+        TAKE_DATASET_CHOICE: {
+            scanner = new Scanner(System.in);
 
-        //String path = "Toronto/car-f-92.stu";// 36 (32)
-        //int courseCount = 543;
+            String choice;
 
-        //String path = "Toronto/kfu-s-93.stu";// 22 (20)
-        //int courseCount = 461;
-
-        //String path = "Toronto/tre-s-92.stu";// 26 (23)
-        //int courseCount = 261;
-
-        //String path = "test_graph";// 26 (3)
-        //int courseCount = 8;
-
-        Scanner scanner = new Scanner(new File(path));
-
-        Graph graph = new Graph(courseCount);
-
-        String line;
-        String[] coursesNo;
-        int[] courses;
-
-        while (scanner.hasNext()){
-            line = scanner.nextLine();
-
-            coursesNo = line.split(" ");
-            courses = new int[coursesNo.length];
-
-            for (int i=0; i<coursesNo.length; i++)
-                courses[i] = Integer.parseInt(coursesNo[i]) - 1;
-
-            for (int i=0; i<courses.length; i++){
-                for (int j=i+1; j<courses.length; j++){
-                    graph.addEdge(courses[i], courses[j]);
+            while (dataset == null){
+                System.out.println("Select a dataset.");
+                System.out.println("1 for CAR91");
+                System.out.println("2 for CAR92");
+                System.out.println("3 for KFU93");
+                System.out.println("4 for TRE92");
+                System.out.println("5 for YOR83");
+                System.out.print("Enter Choice: ");
+                choice = scanner.nextLine();
+                switch (choice){
+                    case "1": dataset = DATASET.car91; break;
+                    case "2": dataset = DATASET.car92; break;
+                    case "3": dataset = DATASET.kfu93; break;
+                    case "4": dataset = DATASET.tre92; break;
+                    case "5": dataset = DATASET.yor83; break;
+                    default:
+                        System.out.println("Please enter Correctly.\nTry Again.\n");
                 }
             }
         }
 
+        GENERATE_GRAPH: {
+            scanner = new Scanner(new File(dataset.toString()));
+
+            final String path = scanner.nextLine();
+            final int courseCount = scanner.nextInt();
+            final int studentCount = scanner.nextInt();
+
+            scanner = new Scanner(new File(path));
+
+            graph = new Graph(courseCount, studentCount);
+
+            String line;
+            String[] coursesNo;
+            int[] courses;
+
+            while (scanner.hasNext()){
+                line = scanner.nextLine();
+
+                coursesNo = line.split(" ");
+                courses = new int[coursesNo.length];
+
+                for (int i=0; i<coursesNo.length; i++)
+                    courses[i] = Integer.parseInt(coursesNo[i]) - 1;
+
+                graph.addStudent(courses);
+
+                for (int i=0; i<courses.length; i++){
+                    for (int j=i+1; j<courses.length; j++){
+                        graph.addEdge(courses[i], courses[j]);
+                    }
+                }
+            }
+        }
 
         graph.applyDSatur();
-
-        System.out.println(graph.takenColorCount);
+        graph.print();
     }
 }

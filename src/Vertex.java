@@ -1,6 +1,6 @@
 import java.util.HashSet;
 
-public class Vertex{
+public class Vertex {
     private HashSet<Vertex> neighbours;
     private HashSet<Integer> saturatedColors;
 
