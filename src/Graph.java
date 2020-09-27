@@ -21,7 +21,7 @@ public class Graph {
         takenColorCount = 0;
     }
 
-    public void addStudent(int[] courses){
+    public void addStudent(int[] courses) {
         Vector<Vertex> v = new Vector<>(courses.length);
 
         for (int course : courses)
@@ -30,12 +30,12 @@ public class Graph {
         students.add(new Student(students.size(), v));
     }
 
-    public void addEdge(int u, int v){
+    public void addEdge(int u, int v) {
         vertices.get(u).addEdge(vertices.get(v));
         vertices.get(v).addEdge(vertices.get(u));
     }
 
-    public double getPenalty(){
+    public double getPenalty() {
         int penalty = 0;
 
         for (int i=0; i<studentCount; i++)
@@ -44,40 +44,65 @@ public class Graph {
         return (double) penalty/studentCount;
     }
 
-    public void applyDSatur(){
+    public void applyMaxDegree() {
+        Vertex v;
+
         for (int i=0; i<vertexCount; i++){
-            Vertex v = getNextVertex();
+            v = getMaxDegreeVertex();
             assignScheduling(v);
             updateNeighboursSaturation(v);
         }
     }
 
-    public Vertex getNextVertex(){
-        Vertex max = new Vertex(0, 0);
+    public Vertex getMaxDegreeVertex() {
+        Vertex max = null;
         for (Vertex v: vertices) {
-            if (v.isNotScheduled()){
-                if(max.getSaturatedDegree() < v.getSaturatedDegree())
+            if(v.isNotScheduled() &&
+                    (max == null || max.getDegree() < v.getDegree()))
                     max = v;
-                else if(max.getDegree() < v.getDegree())
+        }
+        return max;
+    }
+
+    public void applyDSatur() {
+        Vertex v;
+
+        for (int i=0; i<vertexCount; i++) {
+            v = getMaxSaturatedDegreeVertex();
+            assignScheduling(v);
+            updateNeighboursSaturation(v);
+        }
+    }
+
+    public Vertex getMaxSaturatedDegreeVertex() {
+        Vertex max = null;
+        for (Vertex v: vertices) {
+            if (v.isNotScheduled()) {
+                if(max == null)
+                    max = v;
+                else if(max.getSaturatedDegree() < v.getSaturatedDegree())
+                    max = v;
+                else if(max.getSaturatedDegree() == v.getSaturatedDegree() &&
+                        max.getDegree() < v.getDegree())
                     max = v;
             }
         }
         return max;
     }
 
-    public void assignScheduling(Vertex v){
-        if (v.getSaturatedDegree() == takenColorCount){
+    public void assignScheduling(Vertex v) {
+        if (v.getSaturatedDegree() == takenColorCount) {
             v.setScheduling(takenColorCount);
             takenColorCount++;
             return;
         }
 
         boolean[] flags = new boolean[takenColorCount];
-        for (int i: v.getSaturatedColors()){
+        for (int i: v.getSaturatedColors()) {
             flags[i] = true;
         }
 
-        for (int i=0; i<flags.length; i++){
+        for (int i=0; i<flags.length; i++) {
             if (!flags[i]) {
                 v.setScheduling(i);
                 return;
@@ -85,7 +110,7 @@ public class Graph {
         }
     }
 
-    public void updateNeighboursSaturation(Vertex v){
+    public void updateNeighboursSaturation(Vertex v) {
         if(v.isNotScheduled())
             return;
 
@@ -94,7 +119,7 @@ public class Graph {
         }
     }
 
-    public void print(){
+    public void print() {
         System.out.println();
         System.out.println("Timeslots: " + takenColorCount);
         System.out.printf("Penalty: %.2f\n" ,getPenalty());
@@ -105,11 +130,14 @@ public class Graph {
         System.out.println();
     }
 
-    public static void main(String[] args) throws Exception{
-        Scanner scanner;
-        DATASET dataset = null;
-        Graph graph;
+    public static void main(String[] args) throws Exception {
+        final boolean useDSatur = true;
 
+        for (DATASET dataset: DATASET.values()) {
+            Scanner scanner;
+            Graph graph;
+
+        /*
         TAKE_DATASET_CHOICE: {
             scanner = new Scanner(System.in);
 
@@ -135,42 +163,50 @@ public class Graph {
                 }
             }
         }
+        */
 
-        GENERATE_GRAPH: {
-            scanner = new Scanner(new File(dataset.toString()));
 
-            final String path = scanner.nextLine();
-            final int courseCount = scanner.nextInt();
-            final int studentCount = scanner.nextInt();
+            GENERATE_GRAPH: {
+                scanner = new Scanner(new File(dataset.toString()));
 
-            scanner = new Scanner(new File(path));
+                final String path = scanner.nextLine();
+                final int courseCount = scanner.nextInt();
+                final int studentCount = scanner.nextInt();
 
-            graph = new Graph(courseCount, studentCount);
+                scanner = new Scanner(new File(path));
 
-            String line;
-            String[] coursesNo;
-            int[] courses;
+                graph = new Graph(courseCount, studentCount);
 
-            while (scanner.hasNext()){
-                line = scanner.nextLine();
+                String line;
+                String[] coursesNo;
+                int[] courses;
 
-                coursesNo = line.split(" ");
-                courses = new int[coursesNo.length];
+                while (scanner.hasNext()){
+                    line = scanner.nextLine();
 
-                for (int i=0; i<coursesNo.length; i++)
-                    courses[i] = Integer.parseInt(coursesNo[i]) - 1;
+                    coursesNo = line.split(" ");
+                    courses = new int[coursesNo.length];
 
-                graph.addStudent(courses);
+                    for (int i=0; i<coursesNo.length; i++)
+                        courses[i] = Integer.parseInt(coursesNo[i]) - 1;
 
-                for (int i=0; i<courses.length; i++){
-                    for (int j=i+1; j<courses.length; j++){
-                        graph.addEdge(courses[i], courses[j]);
+                    graph.addStudent(courses);
+
+                    for (int i=0; i<courses.length; i++){
+                        for (int j=i+1; j<courses.length; j++){
+                            graph.addEdge(courses[i], courses[j]);
+                        }
                     }
                 }
             }
-        }
 
-        graph.applyDSatur();
-        graph.print();
+            if(useDSatur) graph.applyDSatur();
+            else graph.applyMaxDegree();
+
+            System.out.println();
+            System.out.println(dataset);
+            graph.print();
+            System.out.println("------------------------");
+        }
     }
 }
