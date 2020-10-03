@@ -1,15 +1,19 @@
 import java.io.File;
-import java.util.Scanner;
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.util.HashSet;
+import java.util.Random;
 import java.util.Vector;
 
-public class Graph {
+public class Graph{
     private int vertexCount;
     private Vector<Vertex> vertices;
     private Vector<Student> students;
     private int takenColorCount;
     private int studentCount;
+    private DATASET dataset;
 
-    public Graph(int vertexCount, int studentCount) {
+    public Graph(int vertexCount, int studentCount, DATASET dataset) {
         this.vertexCount = vertexCount;
         vertices = new Vector<>(vertexCount);
         for (int i=0; i<vertexCount; i++)
@@ -19,6 +23,8 @@ public class Graph {
         students = new Vector<>(studentCount);
 
         takenColorCount = 0;
+
+        this.dataset = dataset;
     }
 
     public void addStudent(int[] courses) {
@@ -42,6 +48,22 @@ public class Graph {
             penalty += students.get(i).getPenalty();
 
         return (double) penalty/studentCount;
+    }
+
+    public void applyRandom() {
+        Vertex v;
+        Random random = new Random();
+
+        HashSet<Integer> hashSet = new HashSet<>(vertexCount);
+        while (hashSet.size() != vertexCount){
+            hashSet.add(random.nextInt(vertexCount));
+        }
+
+        for (int i:hashSet){
+            v = vertices.get(i);
+            assignScheduling(v);
+            updateNeighboursSaturation(v);
+        }
     }
 
     public void applyMaxDegree() {
@@ -121,6 +143,7 @@ public class Graph {
 
     public void print() {
         System.out.println();
+        System.out.println("Dataset: "+dataset.toString());
         System.out.println("Timeslots: " + takenColorCount);
         System.out.printf("Penalty: %.2f\n" ,getPenalty());
         System.out.println();
@@ -130,83 +153,70 @@ public class Graph {
         System.out.println();
     }
 
-    public static void main(String[] args) throws Exception {
-        final boolean useDSatur = true;
+    public Graph deepCopy() {
+//        Graph graph = Main.generateGraph(dataset);
+//
+//        for (int i = 0; i < graph.getVertexCount(); i++) {
+//            graph.vertices.get(i).setScheduling(this.vertices.get(i).getScheduling());
+//        }
+//
+//        return graph;
 
-        for (DATASET dataset: DATASET.values()) {
-            Scanner scanner;
-            Graph graph;
+        Graph graph = new Graph(vertexCount, studentCount, dataset);
 
-        /*
-        TAKE_DATASET_CHOICE: {
-            scanner = new Scanner(System.in);
-
-            String choice;
-
-            while (dataset == null){
-                System.out.println("Select a dataset.");
-                System.out.println("1 for CAR91");
-                System.out.println("2 for CAR92");
-                System.out.println("3 for KFU93");
-                System.out.println("4 for TRE92");
-                System.out.println("5 for YOR83");
-                System.out.print("Enter Choice: ");
-                choice = scanner.nextLine();
-                switch (choice){
-                    case "1": dataset = DATASET.car91; break;
-                    case "2": dataset = DATASET.car92; break;
-                    case "3": dataset = DATASET.kfu93; break;
-                    case "4": dataset = DATASET.tre92; break;
-                    case "5": dataset = DATASET.yor83; break;
-                    default:
-                        System.out.println("Please enter Correctly.\nTry Again.\n");
-                }
-            }
+        for (int i = 0; i < vertexCount; i++) {
+            this.vertices.get(i).deepCopy(graph.vertices.get(i), graph.vertices);
         }
-        */
 
+        for (int i = 0; i < studentCount; i++) {
+            graph.students.add(this.students.get(i).deepCopy(graph.vertices));
+        }
 
-            GENERATE_GRAPH: {
-                scanner = new Scanner(new File(dataset.toString()));
+        graph.takenColorCount = this.takenColorCount;
 
-                final String path = scanner.nextLine();
-                final int courseCount = scanner.nextInt();
-                final int studentCount = scanner.nextInt();
+        return graph;
+    }
 
-                scanner = new Scanner(new File(path));
+    public int getVertexCount() {
+        return vertexCount;
+    }
 
-                graph = new Graph(courseCount, studentCount);
+    public void setVertexCount(int vertexCount) {
+        this.vertexCount = vertexCount;
+    }
 
-                String line;
-                String[] coursesNo;
-                int[] courses;
+    public int getTakenColorCount() {
+        return takenColorCount;
+    }
 
-                while (scanner.hasNext()){
-                    line = scanner.nextLine();
+    public void setTakenColorCount(int takenColorCount) {
+        this.takenColorCount = takenColorCount;
+    }
 
-                    coursesNo = line.split(" ");
-                    courses = new int[coursesNo.length];
+    public int getStudentCount() {
+        return studentCount;
+    }
 
-                    for (int i=0; i<coursesNo.length; i++)
-                        courses[i] = Integer.parseInt(coursesNo[i]) - 1;
+    public void setStudentCount(int studentCount) {
+        this.studentCount = studentCount;
+    }
 
-                    graph.addStudent(courses);
+    public Vertex getVertex(int index){
+        return vertices.get(index);
+    }
 
-                    for (int i=0; i<courses.length; i++){
-                        for (int j=i+1; j<courses.length; j++){
-                            graph.addEdge(courses[i], courses[j]);
-                        }
-                    }
-                }
+    public void printSchedule(){
+        try {
+            PrintWriter printWriter = new PrintWriter(new File("Schedule"));
+
+            for (Vertex v: vertices) {
+                printWriter.printf("%s -> %5d -> %5d\n", v, v.getNb(), v.getScheduling());
             }
 
-            if(useDSatur) graph.applyDSatur();
-            else graph.applyMaxDegree();
-
-            System.out.println();
-            System.out.println(dataset);
-            graph.print();
-            System.out.println("------------------------");
+            printWriter.flush();
+            printWriter.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
         }
     }
 }

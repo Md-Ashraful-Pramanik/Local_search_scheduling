@@ -1,4 +1,5 @@
 import java.util.HashSet;
+import java.util.Vector;
 
 public class Vertex {
     private HashSet<Vertex> neighbours;
@@ -62,6 +63,25 @@ public class Vertex {
     public void setScheduling(int scheduling) {
         this.scheduling = scheduling;
         setScheduled(true);
+    }
+
+    public int getNb() {
+        return nb;
+    }
+
+    public void setNb(int nb) {
+        this.nb = nb;
+    }
+
+    public void deepCopy(Vertex v, Vector<Vertex> vertices) {
+        v.scheduling = this.scheduling;
+        v.scheduled = this.scheduled;
+
+        v.saturatedColors.addAll(this.saturatedColors);
+
+        for (Vertex neighbour : neighbours) {
+            v.neighbours.add(vertices.get(neighbour.nb));
+        }
     }
 
     @Override
