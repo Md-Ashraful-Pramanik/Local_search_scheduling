@@ -30,24 +30,45 @@ public class Student {
         courses.sort((o1, o2) -> o2.getScheduling() - o1.getScheduling());
 
         int penalty = 0;
-        for (int i=0; i<courses.size()-1; i++){
-            switch (courses.get(i).getScheduling() - courses.get(i+1).getScheduling()){
-                case 0:
-                    //System.out.println(courses.get(i));
-                    //System.out.println(courses.get(i+1));
-                    //System.out.println(courses.get(i).getNb());
-                    //System.out.println(courses.get(i+1).getNb());
-                    System.out.println("Wrong sceduling");
-                    break;
-                case 1: penalty += 16; break;
-                case 2: penalty += 8; break;
-                case 3: penalty += 4; break;
-                case 4: penalty += 2; break;
-                case 5: penalty += 1; break;
+        for (int i = 0; i<courses.size()-1; i++){
+            penalty += calculatePenalty(courses.get(i).getScheduling(), courses.get(i+1).getScheduling());
+        }
+
+        return penalty;
+    }
+
+    public int getPenaltyAllPair(){
+        int penalty = 0;
+        for (int i = 0; i<courses.size(); i++){
+            for (int j = i+1; j < courses.size(); j++) {
+                penalty += calculatePenalty(courses.get(i).getScheduling(), courses.get(j).getScheduling());
             }
         }
 
         return penalty;
+    }
+
+    public int calculatePenalty(int i, int j) {
+        switch (Math.abs(i - j)) {
+            case 0:
+                //System.out.println(courses.get(i));
+                //System.out.println(courses.get(i+1));
+                //System.out.println(courses.get(i).getNb());
+                //System.out.println(courses.get(i+1).getNb());
+                System.out.println("Wrong sceduling");
+                break;
+            case 1:
+                return 16;
+            case 2:
+                return 8;
+            case 3:
+                return 4;
+            case 4:
+                return 2;
+            case 5:
+                return 1;
+        }
+        return 0;
     }
 
     public Student deepCopy(Vector<Vertex> vertices) {

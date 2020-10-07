@@ -52,6 +52,8 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         final boolean useDSatur = true;
+        final boolean useLargestDegree = true;
+        final boolean useRandom = true;
 
         for (DATASET dataset: DATASET.values()) {
 
@@ -86,10 +88,21 @@ public class Main {
 
             Graph graph = generateGraph(dataset);
 
-            //if (useDSatur) graph.applyDSatur();
-            //graph.applyMaxDegree();
-            //graph.applyDSatur();
-            graph.applyRandom();
+            /*
+            Scanner sol = new Scanner(new File("yor83.sol"));
+
+            while (sol.hasNextInt()){
+                int course = sol.nextInt() - 1;
+                int schedule = sol.nextInt();
+
+                graph.getVertex(course).setScheduling(schedule);
+            }
+
+             */
+
+            if (useDSatur) graph.applyDSatur();
+            else if(useLargestDegree) graph.applyMaxDegree();
+            else if(useRandom) graph.applyRandom();
 
             LocalSearch localSearch = new LocalSearch();
             Graph localSearchResult = localSearch.applyLocalSearch(graph);

@@ -88,12 +88,26 @@ public class Graph{
 
     public void applyDSatur() {
         Vertex v;
+//        PrintWriter pr = null;
+//
+//        try {
+//            pr = new PrintWriter(new File("csv/vertex Ordering "+dataset+".csv"));
+//            pr.println("Vertex index, Degree, Saturation Degree, Color");
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
 
         for (int i=0; i<vertexCount; i++) {
             v = getMaxSaturatedDegreeVertex();
             assignScheduling(v);
             updateNeighboursSaturation(v);
+//            pr.println(v.getNb() + ","+
+//                    v.getNeighbours().size()+ "," +
+//                    v.getSaturatedColors().size() + "," +
+//                    v.getScheduling() + ",");
         }
+//
+//        pr.close();
     }
 
     public Vertex getMaxSaturatedDegreeVertex() {
